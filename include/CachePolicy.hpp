@@ -1,7 +1,7 @@
-# pragma once
+#pragma once
 
-# include <iostream>
-# include <string>
+#include <iostream>
+#include <string>
 
 template <typename K, typename V>
 class CachePolicy{
@@ -10,8 +10,8 @@ class CachePolicy{
         virtual V get(const K& key) = 0;
         virtual void put(const K& key, const V& value) = 0;
         virtual void display() const = 0;
-        virtual getHits() const = 0;
-        virtual getMisses() const = 0;
+        virtual int getHits() const = 0;
+        virtual int getMisses() const = 0;
 
-        virtual ~CachePolicy() = default;
+        virtual ~CachePolicy() {}
 };
