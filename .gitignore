@@ -3,3 +3,8 @@ build/
 *.obj
 *.ilk
 *.pdb
+*.lib
+*.exp
+.vs/
+Debug/
+Release/
