@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cache Simulator</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0f0f0f;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        header {
+            background: #1a1a1a;
+            border-bottom: 1px solid #2a2a2a;
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header h1 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        header h1 span {
+            color: #6c63ff;
+        }
+
+        .policy-badge {
+            background: #6c63ff22;
+            color: #6c63ff;
+            border: 1px solid #6c63ff55;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+
+        .card h2 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 0.85rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 4px;
+        }
+
+        input, select {
+            width: 100%;
+            background: #111;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            color: #e0e0e0;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        input:focus, select:focus {
+            border-color: #6c63ff;
+        }
+
+        button {
+            width: 100%;
+            padding: 9px;
+            border-radius: 8px;
+            border: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            margin-bottom: 0.5rem;
+        }
+
+        button:hover { opacity: 0.85; }
+
+        .btn-primary { background: #6c63ff; color: #fff; }
+        .btn-success { background: #22c55e; color: #fff; }
+        .btn-info    { background: #3b82f6; color: #fff; }
+        .btn-danger  { background: #ef4444; color: #fff; }
+
+        .divider {
+            border: none;
+            border-top: 1px solid #2a2a2a;
+            margin: 1rem 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .stat-card {
+            background: #111;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.75rem;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .stat-card .stat-value {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .stat-card.hits .stat-value  { color: #22c55e; }
+        .stat-card.misses .stat-value { color: #ef4444; }
+        .stat-card.rate .stat-value   { color: #6c63ff; }
+
+        .cache-visual {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 120px;
+        }
+
+        .cache-slot {
+            background: #111;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            padding: 10px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .cache-slot.mru { border-left: 3px solid #6c63ff; }
+        .cache-slot.mid { border-left: 3px solid #3b82f6; }
+        .cache-slot.lru { border-left: 3px solid #ef4444; }
+
+        .slot-key {
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        .slot-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .slot-freq {
+            font-size: 0.75rem;
+            color: #6c63ff;
+            background: #6c63ff22;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #444;
+            font-size: 0.85rem;
+            padding: 2rem 0;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            font-size: 0.8rem;
+            padding: 6px 10px;
+            border-radius: 6px;
+            background: #111;
+            color: #888;
+            border-left: 3px solid #2a2a2a;
+        }
+
+        .history-item.put  { border-left-color: #22c55e; }
+        .history-item.get  { border-left-color: #3b82f6; }
+        .history-item.hit  { border-left-color: #6c63ff; color: #a78bfa; }
+        .history-item.miss { border-left-color: #ef4444; color: #f87171; }
+        .history-item.evict { border-left-color: #f59e0b; color: #fbbf24; }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 999;
+        }
+
+        .toast.show { opacity: 1; }
+        .toast.hit  { background: #6c63ff; color: #fff; }
+        .toast.miss { background: #ef4444; color: #fff; }
+        .toast.put  { background: #22c55e; color: #fff; }
+
+        .capacity-bar {
+            background: #111;
+            border-radius: 6px;
+            height: 6px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+
+        .capacity-fill {
+            height: 100%;
+            background: #6c63ff;
+            border-radius: 6px;
+            transition: width 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Cache <span>Simulator</span></h1>
+    <span class="policy-badge" id="headerPolicy">LRU</span>
+</header>
+
+<div class="container">
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+
+        <!-- Config -->
+        <div class="card">
+            <h2>Configuration</h2>
+            <div class="form-group">
+                <label>Policy</label>
+                <select id="policy">
+                    <option value="LRU">LRU — Least Recently Used</option>
+                    <option value="LFU">LFU — Least Frequently Used</option>
+                    <option value="FIFO">FIFO — First In First Out</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Capacity</label>
+                <input type="number" id="capacity" value="3" min="1" max="10" />
+            </div>
+            <button class="btn-primary" onclick="applyConfig()">Apply Configuration</button>
+        </div>
+
+        <!-- Operations -->
+        <div class="card">
+            <h2>Operations</h2>
+            <div class="form-group">
+                <label>Key</label>
+                <input type="number" id="opKey" placeholder="e.g. 1" />
+            </div>
+            <div class="form-group">
+                <label>Value (for PUT)</label>
+                <input type="number" id="opValue" placeholder="e.g. 100" />
+            </div>
+            <button class="btn-success" onclick="doPut()">PUT</button>
+            <button class="btn-info" onclick="doGet()">GET</button>
+            <hr class="divider">
+            <button class="btn-danger" onclick="resetCache()">Reset Cache</button>
+        </div>
+
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+
+        <!-- Stats -->
+        <div class="card">
+            <h2>Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-card hits">
+                    <div class="stat-label">Hits</div>
+                    <div class="stat-value" id="statHits">0</div>
+                </div>
+                <div class="stat-card misses">
+                    <div class="stat-label">Misses</div>
+                    <div class="stat-value" id="statMisses">0</div>
+                </div>
+                <div class="stat-card rate">
+                    <div class="stat-label">Hit Rate</div>
+                    <div class="stat-value" id="statRate">0%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Size / Cap</div>
+                    <div class="stat-value" id="statSize">0 / 3</div>
+                </div>
+            </div>
+            <div class="capacity-bar">
+                <div class="capacity-fill" id="capacityFill" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Cache State -->
+        <div class="card">
+            <h2>Cache State</h2>
+            <div class="cache-visual" id="cacheVisual">
+                <div class="empty-state">Cache is empty</div>
+            </div>
+        </div>
+
+        <!-- History -->
+        <div class="card">
+            <h2>Operation Log</h2>
+            <div class="history-list" id="historyList">
+                <div class="empty-state">No operations yet</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    async function applyConfig() {
+        const policy = document.getElementById("policy").value;
+        const capacity = document.getElementById("capacity").value;
+        await fetch("/api/config", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ policy, capacity })
+        });
+        document.getElementById("headerPolicy").textContent = policy;
+        await refreshState();
+        showToast("Configuration applied", "put");
+    }
+
+    async function doPut() {
+        const key = document.getElementById("opKey").value;
+        const value = document.getElementById("opValue").value;
+        if (key === "" || value === "") return showToast("Enter key and value", "miss");
+        const res = await fetch("/api/put", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ key, value })
+        });
+        const data = await res.json();
+        updateUI(data);
+        showToast(`PUT key=${key} value=${value}`, "put");
+    }
+
+    async function doGet() {
+        const key = document.getElementById("opKey").value;
+        if (key === "") return showToast("Enter a key", "miss");
+        const res = await fetch("/api/get", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ key })
+        });
+        const data = await res.json();
+        updateUI(data);
+        if (data.status === "hit") {
+            showToast(`HIT! key=${key} → value=${data.value}`, "hit");
+        } else {
+            showToast(`MISS! key=${key} not found`, "miss");
+        }
+    }
+
+    async function resetCache() {
+        const policy = document.getElementById("policy").value;
+        const capacity = document.getElementById("capacity").value;
+        await fetch("/api/config", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ policy, capacity })
+        });
+        await refreshState();
+        showToast("Cache reset", "put");
+    }
+
+    async function refreshState() {
+        const res = await fetch("/api/state");
+        const data = await res.json();
+        updateUI(data);
+    }
+
+    function updateUI(data) {
+        document.getElementById("statHits").textContent = data.hits;
+        document.getElementById("statMisses").textContent = data.misses;
+        document.getElementById("statRate").textContent = data.hit_rate + "%";
+        document.getElementById("statSize").textContent = data.size + " / " + data.capacity;
+
+        const fillPct = (data.size / data.capacity) * 100;
+        document.getElementById("capacityFill").style.width = fillPct + "%";
+
+        const visual = document.getElementById("cacheVisual");
+        if (data.items.length === 0) {
+            visual.innerHTML = '<div class="empty-state">Cache is empty</div>';
+        } else {
+            visual.innerHTML = data.items.map((item, index) => {
+                let slotClass = "mid";
+                if (index === 0) slotClass = "mru";
+                if (index === data.items.length - 1) slotClass = "lru";
+                return `
+                    <div class="cache-slot ${slotClass}">
+                        <span class="slot-key">key: ${item.key}</span>
+                        <span class="slot-value">${item.value}</span>
+                        <span class="slot-freq">freq ${item.freq}</span>
+                    </div>`;
+            }).join("");
+        }
+
+        const historyList = document.getElementById("historyList");
+        if (data.history.length === 0) {
+            historyList.innerHTML = '<div class="empty-state">No operations yet</div>';
+        } else {
+            historyList.innerHTML = [...data.history].reverse().map(h => {
+                let cls = "get";
+                if (h.includes("PUT")) cls = "put";
+                if (h.includes("HIT")) cls = "hit";
+                if (h.includes("MISS")) cls = "miss";
+                if (h.includes("Evicted")) cls = "evict";
+                return `<div class="history-item ${cls}">${h}</div>`;
+            }).join("");
+        }
+    }
+
+    function showToast(msg, type) {
+        const toast = document.getElementById("toast");
+        toast.textContent = msg;
+        toast.className = `toast ${type} show`;
+        setTimeout(() => toast.className = "toast", 2500);
+    }
+
+    window.onload = refreshState;
+</script>
+
+</body>
+</html>
