@@ -32,6 +32,7 @@ A C++ implementation of a Cache Simulator supporting three eviction policies —
 
 ## Project Structure
 
+```
 cache-simulator/
 ├── CMakeLists.txt
 ├── README.md
@@ -55,7 +56,7 @@ cache-simulator/
     ├── app.py                ← Flask backend
     └── templates/
         └── index.html        ← Web UI
-
+```
 ---
 
 ## How It Works
